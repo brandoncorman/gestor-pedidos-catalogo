@@ -13,13 +13,9 @@ import {
   Avatar,
   Alert,
   CircularProgress,
-  Paper,
-  Chip,
   Container,
 } from '@mui/material';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import CloudSyncIcon from '@mui/icons-material/CloudSync';
 import { signInWithGoogle } from '../../services/authService';
 
 interface LoginViewProps {
@@ -175,42 +171,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ unauthorizedEmail }) => {
             >
               {isSigningIn ? 'Conectando con Google...' : 'Continuar con Google'}
             </Button>
-
-            {/* Características y garantías */}
-            <Paper
-              variant="outlined"
-              sx={{
-                p: 2,
-                borderRadius: 2.5,
-                bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)'),
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 1.5,
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <CloudSyncIcon color="primary" fontSize="small" />
-                <Typography variant="caption" color="text.secondary">
-                  <strong>Sincronización en la nube:</strong> Tus pedidos se guardan en el teléfono y se respaldan en Supabase.
-                </Typography>
-              </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <LockOutlinedIcon color="success" fontSize="small" />
-                <Typography variant="caption" color="text.secondary">
-                  <strong>Acceso restringido:</strong> Exclusivo para consultoras autorizadas.
-                </Typography>
-              </Box>
-            </Paper>
-
-            <Box sx={{ textAlign: 'center', mt: 1 }}>
-              <Chip
-                label="Local-First PWA • Modo Offline Activo"
-                size="small"
-                color="default"
-                variant="outlined"
-                sx={{ fontSize: '0.7rem' }}
-              />
-            </Box>
           </CardContent>
         </Card>
       </Container>
