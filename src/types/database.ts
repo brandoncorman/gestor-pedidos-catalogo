@@ -95,7 +95,7 @@ export interface Customer {
   descriptor?: string | null;
   /** Número de teléfono o contacto WhatsApp */
   phone?: string | null;
-  /** Indica si corresponde al perfil propio de la consultora para autocompras de metas mínimas */
+  /** Indica si corresponde a la cuenta personal del usuario para registrar compras propias y metas mínimas */
   isSelfProfile: boolean;
   /** Notas adicionales sobre la clienta (preferencias, dirección) */
   notes?: string | null;

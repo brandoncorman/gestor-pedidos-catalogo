@@ -209,7 +209,7 @@ export const EditCustomerModal: React.FC<EditCustomerModalProps> = ({
             }
             label={
               <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                Es cuenta propia de la consultora (Autocompras / Metas mínimas)
+                Es mi cuenta personal (Mis compras / Metas)
               </Typography>
             }
           />
@@ -219,10 +219,10 @@ export const EditCustomerModal: React.FC<EditCustomerModalProps> = ({
             {customer.isSelfProfile ? (
               <Alert severity="info" icon={<SecurityIcon />} sx={{ borderRadius: 3 }}>
                 <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                  Perfil Propio Protegido
+                  Cuenta Personal Protegida
                 </Typography>
                 <Typography variant="caption" sx={{ display: 'block', mt: 0.5 }}>
-                  Esta cuenta corresponde a las autocompras de la consultora y asegura el cómputo de metas mínimas. No puede eliminarse.
+                  Esta es tu cuenta para registrar tus compras personales y calcular tus metas. No se puede eliminar.
                 </Typography>
               </Alert>
             ) : !showDeleteConfirmation ? (

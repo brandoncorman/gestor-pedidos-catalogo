@@ -327,7 +327,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             Base de Datos Limpia (Para Producción)
           </Typography>
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
-            Deja el cuaderno totalmente vacío sin clientas ni pedidos de prueba ficticios, conservando únicamente las empresas (Belcorp y Natura) y el perfil propio de la consultora ("Mi Cuenta").
+            Deja el cuaderno totalmente vacío sin clientas ni pedidos de prueba, conservando únicamente las empresas (Belcorp y Natura) y tu cuenta personal ("Mi Cuenta").
           </Typography>
 
           <Button

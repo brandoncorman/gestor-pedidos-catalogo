@@ -54,14 +54,19 @@ export const db = new CatalogDatabase();
 
 /**
  * Semilla de datos iniciales en blanco para producción.
- * Inicializa únicamente las empresas paraguas, las revistas comerciales y el perfil propio de la consultora ("Mi Cuenta").
+ * Inicializa únicamente las empresas paraguas, las revistas comerciales y la cuenta personal del vendedor ("Mi Cuenta").
  * No crea pedidos ni campañas falsas para que el cuaderno comience 100% limpio.
  */
 export async function seedInitialDataIfNeeded(): Promise<void> {
-  // Migración automática de compatibilidad: Si existía un registro previo con nombre 'Mamá', actualizarlo a 'Mi Cuenta'
-  const legacyRecords = await db.customers.where('name').equals('Mamá').toArray();
+  // Migración automática de compatibilidad para cuentas anteriores
+  const legacyRecords = await db.customers.where('name').equals('Personal').toArray();
   for (const record of legacyRecords) {
-    await db.customers.update(record.id, { name: 'Mi Cuenta' });
+    await db.customers.update(record.id, { name: 'Mi Cuenta', descriptor: 'Mis compras / Metas' });
+  }
+
+  const legacySelf = await db.customers.where('isSelfProfile').equals(1).first();
+  if (legacySelf && (legacySelf.descriptor === 'Autocompras / Metas' || legacySelf.descriptor?.includes('Stock personal'))) {
+    await db.customers.update(legacySelf.id, { descriptor: 'Mis compras / Metas' });
   }
 
   const companyCount = await db.parentCompanies.count();
@@ -129,12 +134,12 @@ export async function seedInitialDataIfNeeded(): Promise<void> {
     },
   ]);
 
-  // 3. Perfil propio de la consultora para autocompras y metas de campaña
+  // 3. Cuenta personal para registrar compras propias y cómputo de metas
   await db.customers.bulkAdd([
     {
       id: 'cust-self-consultant',
       name: 'Mi Cuenta',
-      descriptor: 'Autocompras / Metas',
+      descriptor: 'Mis compras / Metas',
       phone: null,
       notes: null,
       isSelfProfile: true,

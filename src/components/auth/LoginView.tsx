@@ -124,7 +124,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ unauthorizedEmail }) => {
                   Acceso no autorizado
                 </Typography>
                 <Typography variant="body2">
-                  La cuenta <strong>{unauthorizedEmail}</strong> no está en la lista blanca de consultoras permitidas.
+                  La cuenta <strong>{unauthorizedEmail}</strong> no tiene permisos para acceder a esta aplicación.
                 </Typography>
               </Alert>
             )}
