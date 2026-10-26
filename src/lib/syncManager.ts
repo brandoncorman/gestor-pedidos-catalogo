@@ -136,7 +136,7 @@ export async function triggerSync(): Promise<number> {
 
 /**
  * Descarga y sincroniza los datos desde Supabase hacia la base de datos local Dexie.
- * Permite que múltiples dispositivos (ej. celular de la madre y del hijo) compartan los datos actualizados.
+ * Permite que múltiples dispositivos conectados compartan los datos actualizados.
  */
 export async function pullFromSupabase(): Promise<void> {
   if (!navigator.onLine || !isSupabaseConfigured() || !supabase) {

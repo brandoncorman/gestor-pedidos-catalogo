@@ -312,7 +312,7 @@ export const CustomerListView: React.FC<CustomerListViewProps> = ({
               }
               label={
                 <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  Es cuenta propia de mi madre (Autocompras / Metas mínimas)
+                  Es cuenta propia de la consultora (Autocompras / Metas mínimas)
                 </Typography>
               }
             />

@@ -54,10 +54,16 @@ export const db = new CatalogDatabase();
 
 /**
  * Semilla de datos iniciales en blanco para producción.
- * Inicializa únicamente las empresas paraguas, las revistas comerciales y el perfil propio de la consultora ("Mamá").
+ * Inicializa únicamente las empresas paraguas, las revistas comerciales y el perfil propio de la consultora ("Mi Cuenta").
  * No crea pedidos ni campañas falsas para que el cuaderno comience 100% limpio.
  */
 export async function seedInitialDataIfNeeded(): Promise<void> {
+  // Migración automática de compatibilidad: Si existía un registro previo con nombre 'Mamá', actualizarlo a 'Mi Cuenta'
+  const legacyRecords = await db.customers.where('name').equals('Mamá').toArray();
+  for (const record of legacyRecords) {
+    await db.customers.update(record.id, { name: 'Mi Cuenta' });
+  }
+
   const companyCount = await db.parentCompanies.count();
   if (companyCount > 0) return;
 
@@ -123,11 +129,11 @@ export async function seedInitialDataIfNeeded(): Promise<void> {
     },
   ]);
 
-  // 3. Perfil propio de la consultora (Mamá) para autocompras y metas de campaña
+  // 3. Perfil propio de la consultora para autocompras y metas de campaña
   await db.customers.bulkAdd([
     {
-      id: 'cust-self-mama',
-      name: 'Mamá',
+      id: 'cust-self-consultant',
+      name: 'Mi Cuenta',
       descriptor: 'Autocompras / Metas',
       phone: null,
       notes: null,
