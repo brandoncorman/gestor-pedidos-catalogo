@@ -135,17 +135,20 @@ export async function seedInitialDataIfNeeded(): Promise<void> {
   ]);
 
   // 3. Cuenta personal para registrar compras propias y cómputo de metas
-  await db.customers.bulkAdd([
-    {
-      id: 'cust-self-consultant',
-      name: 'Mi Cuenta',
-      descriptor: 'Mis compras / Metas',
-      phone: null,
-      notes: null,
-      isSelfProfile: true,
-      createdAt: new Date().toISOString(),
-    },
-  ]);
+  const existingSelf = await db.customers.where('isSelfProfile').equals(1).first();
+  if (!existingSelf) {
+    await db.customers.bulkAdd([
+      {
+        id: 'cust-self-consultant',
+        name: 'Mi Cuenta',
+        descriptor: 'Mis compras / Metas',
+        phone: null,
+        notes: null,
+        isSelfProfile: true,
+        createdAt: new Date().toISOString(),
+      },
+    ]);
+  }
 }
 
 /**

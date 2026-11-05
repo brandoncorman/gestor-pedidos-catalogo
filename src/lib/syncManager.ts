@@ -164,7 +164,35 @@ export async function pullFromSupabase(): Promise<void> {
       supabase.from('payment_allocations').select('*'),
     ]);
 
-    // Actualizamos tablas en Dexie si la consulta fue exitosa
+    // Obtenemos mutaciones locales pendientes para no borrar registros creados offline
+    const pendingItems = await db.syncQueue.toArray();
+    const pendingByTable = new Map<string, Set<string>>();
+    for (const p of pendingItems) {
+      if (!pendingByTable.has(p.tableName)) {
+        pendingByTable.set(p.tableName, new Set());
+      }
+      pendingByTable.get(p.tableName)!.add(p.recordId);
+    }
+
+    // Helper para conciliar registros: actualiza datos y elimina semillas locales huérfanas o registros eliminados en otros dispositivos
+    const reconcileTable = async (
+      tableName: string,
+      tableObj: any,
+      serverRecords: any[]
+    ) => {
+      if (!serverRecords || serverRecords.length === 0) return;
+      const serverIds = new Set(serverRecords.map((r) => r.id));
+      const pendingIds = pendingByTable.get(tableName) || new Set();
+      const localRecords = await tableObj.toArray();
+      for (const local of localRecords) {
+        if (!serverIds.has(local.id) && !pendingIds.has(local.id)) {
+          await tableObj.delete(local.id);
+        }
+      }
+      await tableObj.bulkPut(serverRecords);
+    };
+
+    // Actualizamos tablas en Dexie
     if (companiesRes.data && companiesRes.data.length > 0) {
       const parsed = companiesRes.data.map((r) => snakeToCamel(r));
       await db.parentCompanies.bulkPut(parsed as any);
@@ -178,37 +206,36 @@ export async function pullFromSupabase(): Promise<void> {
     if (campaignsRes.data && campaignsRes.data.length > 0) {
       const parsed = campaignsRes.data.map((r: any) => {
         const camel = snakeToCamel(r) as any;
-        // Restauramos los nombres de campos esperados por la app
         if (!camel.estimatedArrivalDate && camel.startDate) camel.estimatedArrivalDate = camel.startDate;
         if (!camel.targetPaymentDate && camel.closeDate) camel.targetPaymentDate = camel.closeDate;
         return camel;
       });
-      await db.campaigns.bulkPut(parsed as any);
+      await reconcileTable('campaigns', db.campaigns, parsed);
     }
 
     if (customersRes.data && customersRes.data.length > 0) {
       const parsed = customersRes.data.map((r) => snakeToCamel(r));
-      await db.customers.bulkPut(parsed as any);
+      await reconcileTable('customers', db.customers, parsed);
     }
 
     if (ordersRes.data && ordersRes.data.length > 0) {
       const parsed = ordersRes.data.map((r) => snakeToCamel(r));
-      await db.orders.bulkPut(parsed as any);
+      await reconcileTable('orders', db.orders, parsed);
     }
 
     if (orderItemsRes.data && orderItemsRes.data.length > 0) {
       const parsed = orderItemsRes.data.map((r) => snakeToCamel(r));
-      await db.orderItems.bulkPut(parsed as any);
+      await reconcileTable('order_items', db.orderItems, parsed);
     }
 
     if (paymentsRes.data && paymentsRes.data.length > 0) {
       const parsed = paymentsRes.data.map((r) => snakeToCamel(r));
-      await db.payments.bulkPut(parsed as any);
+      await reconcileTable('payments', db.payments, parsed);
     }
 
     if (allocationsRes.data && allocationsRes.data.length > 0) {
       const parsed = allocationsRes.data.map((r) => snakeToCamel(r));
-      await db.paymentAllocations.bulkPut(parsed as any);
+      await reconcileTable('payment_allocations', db.paymentAllocations, parsed);
     }
   } catch (err) {
     console.error('Error al descargar datos desde Supabase:', err);
