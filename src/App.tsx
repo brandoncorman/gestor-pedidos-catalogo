@@ -100,12 +100,18 @@ export function App() {
     () => localStorage.getItem('catalogo_selected_company') || 'comp-belcorp'
   );
   const selectedCompanyIdRef = useRef<string>(selectedCompanyId);
-  selectedCompanyIdRef.current = selectedCompanyId;
 
   // Campaña activa independiente para cada empresa paraguas
   const [activeCampaignByCompany, setActiveCampaignByCompany] = useState<Record<string, string>>({});
   const activeCampaignByCompanyRef = useRef<Record<string, string>>({});
-  activeCampaignByCompanyRef.current = activeCampaignByCompany;
+
+  useEffect(() => {
+    selectedCompanyIdRef.current = selectedCompanyId;
+  }, [selectedCompanyId]);
+
+  useEffect(() => {
+    activeCampaignByCompanyRef.current = activeCampaignByCompany;
+  }, [activeCampaignByCompany]);
 
   const [activeCampaignId, setActiveCampaignId] = useState<string>('');
 
@@ -254,11 +260,9 @@ export function App() {
    */
   const handleSelectCampaign = async (campaignId: string) => {
     setActiveCampaignId(campaignId);
-    setActiveCampaignByCompany((prev) => {
-      const next = { ...prev, [selectedCompanyId]: campaignId };
-      activeCampaignByCompanyRef.current = next;
-      return next;
-    });
+    const next = { ...activeCampaignByCompany, [selectedCompanyId]: campaignId };
+    activeCampaignByCompanyRef.current = next;
+    setActiveCampaignByCompany(next);
     const campaignOrders = await getOrdersWithDetails(campaignId);
     setOrders(campaignOrders);
   };

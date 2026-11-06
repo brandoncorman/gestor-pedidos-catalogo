@@ -3,6 +3,18 @@
  * @description Utilidades de formateo para monedas, fechas y nombres desambiguados.
  */
 
+const currencyFormatter = new Intl.NumberFormat('es-CL', {
+  style: 'currency',
+  currency: 'CLP',
+  maximumFractionDigits: 0,
+});
+
+const dateFormatter = new Intl.DateTimeFormat('es-CL', {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+});
+
 /**
  * Formatea un valor numérico como monto monetario en pesos con separadores de miles.
  * Ejemplo: 15880 -> "$15.880"
@@ -15,14 +27,7 @@ export function formatCurrency(amount: number | null | undefined): string {
     return '$0';
   }
 
-  // Usamos el locale es-CL para separador de miles con punto y sin decimales
-  const formatted = new Intl.NumberFormat('es-CL', {
-    style: 'currency',
-    currency: 'CLP',
-    maximumFractionDigits: 0,
-  }).format(amount);
-
-  return formatted;
+  return currencyFormatter.format(amount);
 }
 
 /**
@@ -42,21 +47,13 @@ export function formatDate(dateString: string | null | undefined): string {
     const day = parseInt(parts[2], 10);
     const date = new Date(year, month, day);
 
-    return new Intl.DateTimeFormat('es-CL', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    }).format(date);
+    return dateFormatter.format(date);
   }
 
   const date = new Date(dateString);
   if (isNaN(date.getTime())) return dateString;
 
-  return new Intl.DateTimeFormat('es-CL', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  }).format(date);
+  return dateFormatter.format(date);
 }
 
 /**

@@ -60,7 +60,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [pendingOrders, setPendingOrders] = useState<OrderWithBalance[]>([]);
   const [amountStr, setAmountStr] = useState<string>('');
   const [method, setMethod] = useState<PaymentMethod>('cash');
-  const [paymentDate, setPaymentDate] = useState<string>(
+  const [paymentDate, setPaymentDate] = useState<string>(() =>
     new Date().toISOString().split('T')[0]
   );
   const [note, setNote] = useState<string>('');

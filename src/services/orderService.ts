@@ -26,11 +26,12 @@ export interface OrderDetail {
  * @param campaignId - Identificador de la campaña.
  */
 export async function getOrdersWithDetails(campaignId: string): Promise<OrderDetail[]> {
-  const orders = await db.orders.where('campaignId').equals(campaignId).toArray();
-  const allCustomers = await db.customers.toArray();
+  const [orders, allCustomers, allBrands] = await Promise.all([
+    db.orders.where('campaignId').equals(campaignId).toArray(),
+    db.customers.toArray(),
+    db.brands.toArray(),
+  ]);
   const customerMap = new Map(allCustomers.map((c) => [c.id, c]));
-
-  const allBrands = await db.brands.toArray();
   const brandMap = new Map(allBrands.map((b) => [b.id, b]));
 
   const details: OrderDetail[] = [];
