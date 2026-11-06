@@ -37,8 +37,8 @@ interface EditCustomerModalProps {
   isOpen: boolean;
   customer: CustomerWithDebt | null;
   onClose: () => void;
-  onCustomerUpdated: () => void;
-  onCustomerDeleted: (deletedCustomerId: string) => void;
+  onCustomerUpdated: () => Promise<void> | void;
+  onCustomerDeleted: (deletedCustomerId: string) => Promise<void> | void;
 }
 
 /**
@@ -97,7 +97,7 @@ export const EditCustomerModal: React.FC<EditCustomerModalProps> = ({
         notes: notes.trim() || null,
       });
 
-      onCustomerUpdated();
+      await onCustomerUpdated();
       onClose();
     } catch (err) {
       console.error('Error al actualizar clienta:', err);
@@ -110,7 +110,7 @@ export const EditCustomerModal: React.FC<EditCustomerModalProps> = ({
     try {
       setIsDeleting(true);
       await deleteCustomer(customer.id);
-      onCustomerDeleted(customer.id);
+      await onCustomerDeleted(customer.id);
       onClose();
     } catch (err) {
       console.error('Error al eliminar clienta:', err);

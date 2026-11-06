@@ -58,6 +58,10 @@ function normalizePayloadForSupabase(
   return snake;
 }
 
+// Candado de concurrencia para evitar condiciones de carrera en sincronizaciones simultáneas
+let isSyncInProgress = false;
+let activeSyncPromise: Promise<void> | null = null;
+
 /**
  * Encola una mutación en la base de datos local para su posterior réplica a la nube.
  *
@@ -81,9 +85,9 @@ export async function enqueueMutation(
     retryCount: 0,
   });
 
-  // Si estamos en línea y Supabase está configurado, intentamos sincronizar de inmediato
+  // Si estamos en línea y Supabase está configurado, iniciamos sincronización en segundo plano
   if (navigator.onLine && isSupabaseConfigured()) {
-    triggerSync().catch((err) => console.warn('Error al procesar sincronización en segundo plano:', err));
+    fullSync().catch((err) => console.warn('Error al procesar sincronización en segundo plano:', err));
   }
 }
 
@@ -175,6 +179,10 @@ export async function pullFromSupabase(): Promise<void> {
     }
 
     // Helper para conciliar registros: actualiza datos y elimina semillas locales huérfanas o registros eliminados en otros dispositivos
+    // Protege contra la eliminación de registros locales creados recientemente (< 5 min)
+    const FIVE_MINUTES_MS = 5 * 60 * 1000;
+    const now = Date.now();
+
     const reconcileTable = async (
       tableName: string,
       tableObj: any,
@@ -185,7 +193,12 @@ export async function pullFromSupabase(): Promise<void> {
       const pendingIds = pendingByTable.get(tableName) || new Set();
       const localRecords = await tableObj.toArray();
       for (const local of localRecords) {
-        if (!serverIds.has(local.id) && !pendingIds.has(local.id)) {
+        const isRecent =
+          local.createdAt &&
+          !isNaN(new Date(local.createdAt).getTime()) &&
+          now - new Date(local.createdAt).getTime() < FIVE_MINUTES_MS;
+
+        if (!serverIds.has(local.id) && !pendingIds.has(local.id) && !isRecent) {
           await tableObj.delete(local.id);
         }
       }
@@ -240,6 +253,37 @@ export async function pullFromSupabase(): Promise<void> {
   } catch (err) {
     console.error('Error al descargar datos desde Supabase:', err);
   }
+}
+
+/**
+ * Ejecuta un ciclo completo de sincronización bidireccional:
+ * 1. Sube todas las mutaciones locales pendientes (push) mediante triggerSync.
+ * 2. Descarga la verdad consolidada de la nube y concilia Dexie (pull) mediante pullFromSupabase.
+ * Controlado mediante un candado para reutilizar la promesa si ya hay una sincronización activa.
+ */
+export async function fullSync(): Promise<void> {
+  if (!navigator.onLine || !isSupabaseConfigured() || !supabase) {
+    return;
+  }
+
+  if (isSyncInProgress && activeSyncPromise) {
+    return activeSyncPromise;
+  }
+
+  isSyncInProgress = true;
+  activeSyncPromise = (async () => {
+    try {
+      await triggerSync();
+      await pullFromSupabase();
+    } catch (err) {
+      console.warn('Aviso durante ciclo de sincronización bidireccional:', err);
+    } finally {
+      isSyncInProgress = false;
+      activeSyncPromise = null;
+    }
+  })();
+
+  return activeSyncPromise;
 }
 
 /**

@@ -41,7 +41,7 @@ interface CustomerWithDebt extends Customer {
 interface CustomerListViewProps {
   customers: CustomerWithDebt[];
   onOpenPaymentModal: (customerId: string) => void;
-  onRefresh: () => void;
+  onRefresh: () => Promise<void> | void;
 }
 
 /**
@@ -88,7 +88,9 @@ export const CustomerListView: React.FC<CustomerListViewProps> = ({
       setPhone('');
       setIsSelfProfile(false);
       setIsAddModalOpen(false);
-      onRefresh();
+      await onRefresh();
+    } catch (err) {
+      console.error('Error al registrar nueva clienta:', err);
     } finally {
       setIsSubmitting(false);
     }
@@ -341,11 +343,11 @@ export const CustomerListView: React.FC<CustomerListViewProps> = ({
           isOpen={true}
           customer={selectedCustomerForEdit}
           onClose={() => setSelectedCustomerForEdit(null)}
-          onCustomerUpdated={() => {
-            onRefresh();
+          onCustomerUpdated={async () => {
+            await onRefresh();
           }}
-          onCustomerDeleted={() => {
-            onRefresh();
+          onCustomerDeleted={async () => {
+            await onRefresh();
           }}
         />
       )}

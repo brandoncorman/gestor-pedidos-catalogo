@@ -21,7 +21,7 @@ import { CompanyTabs } from './components/common/CompanyTabs';
 import { LoginView } from './components/auth/LoginView';
 
 import { seedInitialDataIfNeeded } from './lib/db';
-import { pullFromSupabase, triggerSync } from './lib/syncManager';
+import { fullSync } from './lib/syncManager';
 import {
   getInitialAuthState,
   subscribeToAuthChanges,
@@ -121,22 +121,11 @@ export function App() {
   const [isEditCampaignOpen, setIsEditCampaignOpen] = useState<boolean>(false);
 
   /**
-   * Carga y refresca todos los datos de la base de datos local Dexie y sincroniza con Supabase.
+   * Carga exclusivamente desde la base de datos local Dexie (latencia < 10ms)
+   * garantizando que la UI se actualice de inmediato ante cualquier cambio.
    */
-  const loadData = useCallback(async () => {
+  const loadLocalData = useCallback(async () => {
     try {
-      await seedInitialDataIfNeeded();
-
-      // Si hay conexión, sincronizamos con Supabase en segundo plano
-      if (navigator.onLine) {
-        try {
-          await pullFromSupabase();
-          await triggerSync();
-        } catch (syncErr) {
-          console.warn('Aviso de sincronización inicial en segundo plano:', syncErr);
-        }
-      }
-
       const [allCampaigns, allBrands, allCompanies, rawCustomers] = await Promise.all([
         getCampaigns(),
         getBrands(),
@@ -192,11 +181,38 @@ export function App() {
         setOrders([]);
       }
     } catch (err) {
-      console.error('Error al cargar datos locales:', err);
+      console.error('Error al leer datos locales Dexie:', err);
+    }
+  }, []);
+
+  /**
+   * Ejecuta la sincronización en segundo plano con Supabase y refresca la UI si hay cambios remotos.
+   */
+  const syncInBackground = useCallback(async () => {
+    if (!navigator.onLine) return;
+    try {
+      await fullSync();
+      // Refresco silencioso de datos locales tras reconciliar cambios remotos
+      await loadLocalData();
+    } catch (syncErr) {
+      console.warn('Aviso de sincronización en segundo plano:', syncErr);
+    }
+  }, [loadLocalData]);
+
+  /**
+   * Carga y refresca todos los datos locales Dexie de inmediato y dispara sincronización en segundo plano.
+   */
+  const loadData = useCallback(async () => {
+    try {
+      await seedInitialDataIfNeeded();
+      await loadLocalData();
+      syncInBackground();
+    } catch (err) {
+      console.error('Error al inicializar datos:', err);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [loadLocalData, syncInBackground]);
 
   // Suscripción al ciclo de vida de autenticación
   useEffect(() => {
